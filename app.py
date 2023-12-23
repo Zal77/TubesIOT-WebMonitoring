@@ -1,8 +1,12 @@
 from flask import Flask, jsonify, render_template
 from flask_mqtt import Mqtt
 import pymysql as mysql
+from flask_socketio import SocketIO
+from datetime import datetime
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 app.config['MQTT_BROKER_URL'] = 'broker.hivemq.com'
 app.config['MQTT_BROKER_PORT'] = 1883
 app.config['MQTT_USERNAME'] = 'Kelompok 1'  # Set this item when you need to verify username and password
@@ -51,9 +55,28 @@ def handle_mqtt_message(client, userdata, message):
         print("Records inserted successfully")
 
         dataSensor = [float(value) for value in cleaned_payload]
+
+        # Send Socket.IO event to update line chart
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        #socketio.emit('update_line_chart', {'labels': current_date, 'data': dataSensor})'''
+        socketio.emit('update_data', {'data': dataSensor, 'labels': current_date})
+
         aktuator(cleaned_payload)
     finally:
         conn.close()
+    
+'''@socketio.on('connect')
+def handle_socketio_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_socketio_disconnect():
+    print('Client disconnected')
+
+@socketio.on('update_line_chart')
+def handle_update_line_chart(data):
+    print('Received data:', data)
+    socketio.emit('update_line_chart', data, broadcast=True)'''
 
 def aktuator(nilaisensor):
     sensor = [float(value) if value.replace('.', '', 1).isdigit() or value == 'nan' else 0.0 for value in nilaisensor]
@@ -76,5 +99,6 @@ def index():
     return render_template("index.html", dataSensor=dataSensor)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
+
 
