@@ -86,8 +86,8 @@ def aktuator(nilaisensor):
         print("Data sensor tidak berisi angka. Skipping...")
         return
 
-    pompa = "PUMPON" if sensor[0] > 30 else "PUMPOFF"
-    fan = "FANON" if sensor[1] > 24 else "FANOFF"
+    pompa = "PUMPON" if sensor[0] > 100 else "PUMPOFF"
+    fan = "FANON" if sensor[1] > 33 else "FANOFF"
     led = "LEDON" if sensor[3] < 700 else "LEDOFF"
 
     control_message = f"{pompa}#{fan}#{led}"
